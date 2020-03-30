@@ -4,16 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "client": "cd client && yarn start",
+    "server": "nodemon index.js",
+    "dev": "concurrently --kill-others-on-fail \"yarn server\" \"yarn client\"",
+    "dev:server": "cd client && yarn build && cd .. && yarn start",
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "heroku-postbuild": "cd client && npm install && npm install --only=dev --no-shrinkwrap && npm run build"
   },
   "keywords": [],
-  "author": "",
+  "author": "Vagan Mkrtchyan <perfoma777@mail.ru>",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "nodemon": "^2.0.2",
     "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "concurrently": "^5.1.0"
   }
 }

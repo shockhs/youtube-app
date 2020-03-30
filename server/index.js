@@ -2,9 +2,10 @@ const express = require('express')
 const socketio = require('socket.io')
 const http = require('http')
 const cors = require('cors')
+const path = require('path')
 
 //IMPORT ROOMS CONTROLs
-const { createRoom, getRoom } = require('./rooms.js')
+const { createRoom, getRoom, removeUser } = require('./rooms.js')
 
 //ENV PORT
 const PORT = process.env.PORT || 5000
@@ -14,67 +15,86 @@ const router = require('./router')
 
 //APP
 const app = express()
-const server = http.createServer(app)
-const io = socketio(server)
+
+app.use(cors())
+
+
+if (process.env.NODE_ENV === 'production') {
+    // Serve any static files
+    app.use(express.static(path.join(__dirname, 'client/build')));
+
+    // Handle React routing, return all requests to React app
+    app.get('*', function (req, res) {
+        res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+    });
+}
+
+const server = app.listen(PORT);
+const io = socketio.listen(server);
 
 app.use(router)
-app.use(cors())
 
 io.on('connection', (socket) => {
     console.log('Connected')
-    socket.on('createRoom', ({ name, url }, callback) => {
-        const { error, room } = createRoom({ id: socket.id, name, url });
+    socket.on('createRoom', ({ name, room, url }, callback) => {
+        console.log(name, room, url)
+        const { error, user } = createRoom({ id: socket.id, name, room, url });
         if (error) return callback(error);
-        socket.join(room.name);
+        socket.join(user.room);
         //socket.broadcast.to(room).emit('message', { user: 'System', text: `User has joined` })
         callback();
     })
+    socket.on('getUrlEvent', (callback) => {
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('url', user.url)
+        callback()
+    })
     socket.on('event', ({ loaded, played }, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('data', { loaded, played })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('data', { loaded, played })
         callback()
     })
     socket.on('playEvent', (status, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('status', { status })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('status', { status })
         callback()
     })
     socket.on('seekEvent', (played, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('seekData', { played: played })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('seekData', { played: played })
         callback()
     })
     socket.on('seekStatus', (status, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('statusSeeking', { seeking: status })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('statusSeeking', { seeking: status })
         callback()
     })
     socket.on('volumeEvent', (volume, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('volumeData', { volume: volume })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('volumeData', { volume: volume })
         callback()
     })
     socket.on('muteEvent', (muted, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('muteData', { muted: muted })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('muteData', { muted: muted })
         callback()
     })
     socket.on('playbackEvent', (rate, callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('playbackData', { rate: rate })
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('playbackData', { rate: rate })
         callback()
     })
     socket.on('controlsEvent', (callback) => {
-        const room = getRoom(socket.id);
-        io.to(room.name).emit('controlsData')
+        const user = getRoom(socket.id);
+        io.to(user.room).emit('controlsData')
         callback()
     })
     socket.on('disconnect', () => {
-        const room = removeUser(socket.id);
-        if (room) {
+        const user = removeUser(socket.id);
+        if (user) {
             console.log(`Room has deleted`)
         }
     })
 })
 
-server.listen(PORT, () => console.log(`Server has started on port ${PORT}`))
+
