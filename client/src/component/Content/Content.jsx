@@ -26,6 +26,7 @@ let socket;
 
 const Content = ({ match: { params }, location: { state } }) => {
     const playerRef = useRef();
+    const textAreaRef = useRef(null);
     const [playing, setPlaying] = useState(true)
     const [duration, setDuration] = useState(0);// eslint-disable-next-line
     const [controls, setControls] = useState(false)// eslint-disable-next-line
@@ -33,6 +34,7 @@ const Content = ({ match: { params }, location: { state } }) => {
     const [muted, setMuted] = useState(false);
     const [volume, setVolume] = useState(0.5)
     const isMounted = useRef(true);
+    const [copySuccess, setCopySuccess] = useState(false)
     const [inputUrl, setInputUrl] = useState('');
     const [url, setUrl] = useState('')
     const [playbackRate, setPlaybackRate] = useState(1);
@@ -140,6 +142,14 @@ const Content = ({ match: { params }, location: { state } }) => {
                 alert(error);
             }
         })
+    }
+    const copyToClickBoard = (event) => {
+        textAreaRef.current.select();
+        document.execCommand('copy');
+        // This is just personal preference.
+        // I prefer to not show the the whole text area selected.
+        event.target.focus();
+        setCopySuccess(true);
     }
     const handleSeekMouseUp = () => {
         socket.emit('seekStatus', false, (error) => {
@@ -313,12 +323,15 @@ const Content = ({ match: { params }, location: { state } }) => {
                 </form>
                 <div className="copy-form mt-20" autoComplete="off">
                     <div className="copy-field">
-                        <input required value={url} type='text' name="url" onChange={() => setUrl(state)} />
+                        <input required value={url} ref={textAreaRef} type='text' name="url" />
                         <label>Current URL</label>
                         <span></span>
                     </div>
-                    <Link to={'/'} className="copy-field-stylish" onClick={(event) => { event.preventDefault(); setUrl(inputUrl); }}>
-                        Copy</Link>
+                    {copySuccess
+                        ? <span className="copy-field-span">Copied</span>
+
+                        : <Link to={'/'} className="copy-field-stylish" onClick={(event) => { event.preventDefault(); copyToClickBoard(event) }}>
+                            Copy</Link>}
                 </div>
             </div>
         </section >

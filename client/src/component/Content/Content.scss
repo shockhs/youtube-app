@@ -297,6 +297,11 @@
   position: relative;
   height: 40px;
   width: 100%;
+  &-span {
+    color: #02ff96;
+    font-weight: 700;
+    margin-top: 10px;
+  }
   span {
     position: absolute;
     bottom: 0;
