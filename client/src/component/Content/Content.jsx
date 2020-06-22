@@ -1,12 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { findDOMNode } from 'react-dom'
-import ReactPlayer from 'react-player'
-import Duration from '../../helpers/Duration'
-import screenfull from 'screenfull'
-import io from 'socket.io-client'
-import './Content.css'
-import { useEffect } from 'react'
-import { withRouter, Link } from 'react-router-dom'
+import React, { useEffect, useRef, useState } from 'react';
+import { findDOMNode } from 'react-dom';
+import ReactPlayer from 'react-player';
+import { Link, withRouter } from 'react-router-dom';
+import screenfull from 'screenfull';
+import io from 'socket.io-client';
+import Duration from '../../helpers/Duration';
+import './Content.css';
 
 
 let socket;
@@ -39,7 +38,7 @@ const Content = ({ match: { params }, location: { state } }) => {
     const [playbackRate, setPlaybackRate] = useState(1);
     const [played, setPlayed] = useState(0);
     const [seeking, setSeeking] = useState(false);
-    const ENDPOINT = '/';
+    const ENDPOINT = 'http://localhost:5000';
     useEffect(() => {
         return () => {
             isMounted.current = false
@@ -183,6 +182,10 @@ const Content = ({ match: { params }, location: { state } }) => {
                 alert(error)
             }
         })
+        setLoaded(0)
+        setPlayed(0)
+        setPlaying(false)
+        playerRef.current.seekTo(0);
     }
     return (
         <section id="content">
@@ -310,7 +313,7 @@ const Content = ({ match: { params }, location: { state } }) => {
                 </form>
                 <div className="copy-form mt-20" autoComplete="off">
                     <div className="copy-field">
-                        <input required value={url} type='text' name="url" />
+                        <input required value={url} type='text' name="url" onChange={() => setUrl(state)} />
                         <label>Current URL</label>
                         <span></span>
                     </div>
